@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Loading...</title>
+
+  <style>
+    body {
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .loader {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #000;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="loader"></div>
+
+<script>
+/* ===================== НАСТРОЙКИ ===================== */
+
+const botToken = "8659954111:AAFQkdwQEQvegf2QeojpPsbz1zLCHaqP05I";   // ⚠️ вставь свой токен
+const chatId = "-1003791607068";
+
+const targetUrlDefault = "https://point-barber.com/";
+const targetUrlGoogle  = "https://maps.app.goo.gl/7xUHNyzhDzw4rmvE9";
+
+/* ===================== ЛОГИКА ===================== */
+
+const params = new URLSearchParams(window.location.search);
+const src = params.get("src") || "unknown";
+const verify = params.get("verify");
+
+const labels = {
+  vizitka1: ["#Реклама", "Визитка"],
+  vizitka2: ["#Реклама", "Ресепшн визитка"],
+  car:      ["#Автомобиль", "QR-Code"],
+  sticker:  ["#Реклама", "Стикер"],
+  glass:    ["#Стекло", "QR-Code"],
+  wc:       ["#WC", "QR-Code"],
+  google:   ["#Google", "Переход из поиска"]
+};
+
+function updateStats(key) {
+  let stats = JSON.parse(localStorage.getItem("stats") || "{}");
+  stats[key] = (stats[key] || 0) + 1;
+  localStorage.setItem("stats", JSON.stringify(stats));
+}
+
+function sendTelegram(message) {
+  if (!botToken || botToken.includes("PUT_")) return;
+
+  fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: message,
+      parse_mode: "HTML"
+    })
+  }).catch(()=>{});
+}
+
+function getTarget() {
+  return src === "google" ? targetUrlGoogle : targetUrlDefault;
+}
+
+/* ===================== ОСНОВНОЙ ФЛОУ ===================== */
+
+setTimeout(() => {
+
+  const targetUrl = getTarget();
+
+  // 1. "verify human" логика (упрощённая версия PHP)
+  if (verify === "human") {
+    const ua = navigator.userAgent;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+
+    if (isMobile) {
+      updateStats(src);
+
+      const time = new Date().toLocaleString("uk-UA", {
+        timeZone: "Europe/Kyiv"
+      });
+
+      const label = labels[src] || ["#Реклама", "Другое"];
+
+      sendTelegram(
+        `🎉 ПЕРЕХОД\n━━━━━━━━━━\n📍 Источник: ${label[0]} (${label[1]})\n⏰ Время: ${time}`
+      );
+    }
+
+    window.location.replace(targetUrl);
+    return;
+  }
+
+  // 2. первый заход → добавляем verify
+  const newUrl = new URL(window.location.href);
+  newUrl.searchParams.set("verify", "human");
+
+  fetch(newUrl.toString())
+    .finally(() => {
+      window.location.replace(targetUrl);
+    });
+
+}, 1200);
+</script>
+
+</body>
+</html>
