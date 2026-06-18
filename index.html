@@ -4,20 +4,40 @@
   <meta charset="UTF-8" />
   <title>Loading...</title>
   <style>
-    body { background: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    .loader { border: 2px solid #f3f3f3; border-top: 2px solid #000; border-radius: 50%; width: 35px; height: 35px; animation: spin 0.8s linear infinite; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
+    body {
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .loader {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #000;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
+
 <body>
   <div class="loader"></div>
 
 <script>
 /* ===================== НАСТРОЙКИ ===================== */
-// ⚠️ ВАЖНО: Если токен не работает, создайте новый через @BotFather!
-const botToken = "8659954111:AAFQkdwQEQvegf2QeojpPsbz1zLCHaqP05I";   
-const chatId = "-1003791607068";
+const botToken = "8659954111:AAFQkdwQEQvegf2QeojpPsbz1zLCHaqP05I";
 
+// 🔥 ДВА РАЗНЫХ ЧАТА
+const logChatId = "-1003791607068";   // общий QR лог
+const carChatId = "-5141768225";   // лог машины
+
+/* ===================== URL ===================== */
 const targetUrlDefault = "http://point-barber.com/";
 const targetUrlGoogle  = "http://maps.app.goo.gl/7xUHNyzhDzw4rmvE9";
 
@@ -37,6 +57,7 @@ const labels = {
   entrance: ["#Подъезд", "Входная дверь"]
 };
 
+/* ===================== STATS ===================== */
 function updateStats(key) {
   try {
     let stats = JSON.parse(localStorage.getItem("stats") || "{}");
@@ -45,6 +66,13 @@ function updateStats(key) {
   } catch(e) {}
 }
 
+/* ===================== ВЫБОР ЧАТА ===================== */
+function getChatId(src) {
+  if (src === "car") return carChatId;
+  return logChatId;
+}
+
+/* ===================== URL ===================== */
 function getTarget() {
   return src === "google" ? targetUrlGoogle : targetUrlDefault;
 }
@@ -53,46 +81,47 @@ function getTarget() {
 setTimeout(() => {
   const targetUrl = getTarget();
 
-  // ШАГ 2: Повторный заход с verify=human
   if (verify === "human") {
     updateStats(src);
 
-    const time = new Date().toLocaleString("uk-UA", { timeZone: "Europe/Kyiv" });
+    const time = new Date().toLocaleString("uk-UA", {
+      timeZone: "Europe/Kyiv"
+    });
+
     const label = labels[src] || ["#Реклама", "Другое"];
-    const message = `🎉 СКАНИРОВАН QR-CODE\n━━━━━━━━━━\n📍 Источник: ${label[0]} (${label[1]})\n⏰ Время: ${time}`;
+
+    const message =
+`🎉 СКАНИРОВАН QR-CODE
+━━━━━━━━━━
+📍 Источник: ${label[0]} (${label[1]})
+⏰ Время: ${time}`;
 
     console.log("Отправка в Telegram...");
 
-    // Отправляем запрос и ждем ответа от сервера Telegram
     fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: chatId,
+        chat_id: getChatId(src),   // 🔥 ВОТ ГЛАВНОЕ ИЗМЕНЕНИЕ
         text: message,
         parse_mode: "HTML"
       })
     })
-    .then(response => {
-      console.log("Telegram ответил:", response.status);
-    })
-    .catch(err => {
-      console.error("Ошибка сети при отправке в ТГ:", err);
-    })
+    .then(res => console.log("Telegram статус:", res.status))
+    .catch(err => console.error("Ошибка Telegram:", err))
     .finally(() => {
-      // РЕДИРЕКТ СРАБОТАЕТ ТОЛЬКО ПОСЛЕ ТОГО, КАК ЗАПРОС В ТГ ЗАВЕРШИЛСЯ (УСПЕШНО ИЛИ С ОШИБКОЙ)
       window.location.replace(targetUrl);
     });
 
     return;
   }
 
-  // ШАГ 1: Первый заход (добавляем параметр в URL и перезагружаем)
   const newUrl = new URL(window.location.href);
   newUrl.searchParams.set("verify", "human");
   window.location.replace(newUrl.toString());
 
 }, 200);
 </script>
+
 </body>
 </html>
