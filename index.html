@@ -20,6 +20,7 @@ const chatId = "-1003791607068";
 
 const targetUrlDefault = "http://point-barber.com/";
 const targetUrlGoogle  = "http://maps.app.goo.gl/7xUHNyzhDzw4rmvE9";
+const targetUrlCar     = "https://welcome-point-barbershop.info/";
 
 /* ===================== ЛОГИКА ===================== */
 const params = new URLSearchParams(window.location.search);
@@ -46,7 +47,9 @@ function updateStats(key) {
 }
 
 function getTarget() {
-  return src === "google" ? targetUrlGoogle : targetUrlDefault;
+  if (src === "google") return targetUrlGoogle;
+  if (src === "car") return targetUrlCar;
+  return targetUrlDefault;
 }
 
 /* ===================== ОСНОВНОЙ ФЛОУ ===================== */
